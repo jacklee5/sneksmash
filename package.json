@@ -1,0 +1,24 @@
+{
+  "name": "sneksmash",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacklee5/sneksmash.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jacklee5/sneksmash/issues"
+  },
+  "homepage": "https://github.com/jacklee5/sneksmash#readme",
+  "dependencies": {
+    "electron": "^2.0.2"
+  }
+}
