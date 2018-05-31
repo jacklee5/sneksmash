@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "client": "electron .",
     "start": "node server.js"
   },
   "repository": {
@@ -20,9 +19,8 @@
   },
   "homepage": "https://github.com/jacklee5/sneksmash#readme",
   "dependencies": {
-    "electron": "^2.0.2",
     "express": "^4.16.3",
-    "p2": "^0.7.1",
+    "nodemon": "^1.17.5",
     "socket.io": "^2.1.1"
   }
 }
