@@ -22,6 +22,7 @@ let playerRooms = {};
 const MAX_PLAYERS = 2;
 const MAP_WIDTH = 40;
 const MAP_HEIGHT = 20;
+const MOVE_COOLDOWN = 150;
 const getPlayer = (id) => {
     return (games[playerRooms[id]]||{players:{}}).players[id];
 }
@@ -124,8 +125,9 @@ io.on('connection', function(socket) {
         }
         games["room" + room].players[socket.id] = {
             name: name,
-            pos: [[x, MAP_HEIGHT - 2], [x, MAP_HEIGHT - 3], [x, MAP_HEIGHT - 4]],
-            movement: {}
+            pos: [[x, MAP_HEIGHT - 4], [x, MAP_HEIGHT - 3], [x, MAP_HEIGHT - 2]],
+            movement: {},
+            canMove: true
         };
         playerRooms[socket.id] = "room" + room;
         console.log(name + " joined room " + room);
@@ -143,23 +145,42 @@ setInterval(() => {
     for(let i in games){
         for(let j in games[i].players){
             let player = games[i].players[j];
-            let nextBlock;
-            if(player.movement.UP){
-                nextBlock = [player.pos[0][0], player.pos[0][1] - 1];
-            }else if(player.movement.DOWN){
-                nextBlock = [player.pos[0][0], player.pos[0][1] + 1];
-            }else if(player.movement.LEFT){
-                nextBlock = [player.pos[0][0] - 1, player.pos[0][1]];
-            }else if(player.movement.RIGHT){
-                nextBlock = [player.pos[0][0] + 1, player.pos[0][1]];
-            }
-            if(nextBlock){
-                player.pos.unshift(nextBlock);
-                player.pos.pop();
+            if(player.canMove){
+                let nextBlock;
+                if(player.movement.UP){
+                    nextBlock = [player.pos[0][0], player.pos[0][1] - 1];
+                }else if(player.movement.DOWN){
+                    nextBlock = [player.pos[0][0], player.pos[0][1] + 1];
+                }else if(player.movement.LEFT){
+                    nextBlock = [player.pos[0][0] - 1, player.pos[0][1]];
+                }else if(player.movement.RIGHT){
+                    nextBlock = [player.pos[0][0] + 1, player.pos[0][1]];
+                }
+                if(nextBlock){
+                    console.log(nextBlock);
+                    //check if block colides with existing players
+                    for(let k in games[i].players){
+                        for(let l = 0; l < games[i].players[k].pos.length; l++){
+                            if(nextBlock && nextBlock[0] === games[i].players[k].pos[l][0] && nextBlock[1] === games[i].players[k].pos[l][1]){
+                                console.log(nextBlock);
+                                nextBlock = undefined;
+                                break;
+                            }
+                        }
+                    }
+                }   
+                if(nextBlock){
+                    player.pos.unshift(nextBlock);
+                    player.pos.pop();
+                    player.canMove = false;
+                    setTimeout(() => {
+                        player.canMove = true;
+                    }, MOVE_COOLDOWN);
+                }
             }
         }
     }
     for(let i in playerRooms){
         io.to(i).emit("state", games[playerRooms[i]]);
     }
-}, 50);
+}, 1 / 60);

@@ -2,6 +2,8 @@ let socket = io();
 
 //frame rate
 const FPS = 30;
+//user's name
+let name = "";
 const getKey = (e) => {
     var keynum;
     if(window.event) {            
@@ -11,7 +13,15 @@ const getKey = (e) => {
     }
     return String.fromCharCode(keynum);
 }
+const showPage = (index) => {
+    let pages = document.getElementsByClassName("page");
+    for(let i = 0; i < pages.length; i++){
+        pages[i].style.display = "none";
+    }
+    pages[index].style.display = "block";
+}
 const game = () => {
+    showPage(1);
     let canvas = document.getElementById("canvas");
     canvas.style.border = "black 1px solid";
     let ctx = canvas.getContext("2d");
@@ -55,13 +65,13 @@ const game = () => {
     document.addEventListener("keydown", (e) => {
         keys[e.key.toString().toLowerCase()] = true;
     });
-    document.addEventListener("keyup", (e) => {
+    document.addEventListener("keyup", (e) => {   
         keys[e.key.toString().toLowerCase()] = false;
-    })
+    });
     
     let game = {};
     
-    socket.emit("new player", prompt("What's your name?"));
+    socket.emit("new player", name);
     socket.on("map", (data) => {
         GRID_SIZE = Math.min(width / data.width, height / data.height);
         OFFSET_Y = (height - GRID_SIZE * data.height) / 2;
@@ -82,11 +92,19 @@ const game = () => {
         if(ready === 2){
             ctx.clearRect(0, 0, width, height);
             let players = game.players;
+            
+            //draw players
             for(let i in players){
                 for(let j = 0; j < players[i].pos.length; j++){
                     ctx.fillStyle = "black";
                     ctx.fillRect(players[i].pos[j][0] * GRID_SIZE + OFFSET_X, players[i].pos[j][1] * GRID_SIZE + OFFSET_Y, GRID_SIZE, GRID_SIZE);
                 }
+                ctx.fillStyle = "black";
+                ctx.strokeStyle = "white";
+                ctx.font = "14px Song Myung";
+                ctx.textAlign = "center";
+                let textdim = ctx.measureText(players[i].name);
+                ctx.fillText(players[i].name, players[i].pos[0][0] * GRID_SIZE + OFFSET_X + GRID_SIZE / 2, players[i].pos[0][1] * GRID_SIZE + OFFSET_Y - 14);
             }
         }
     }, 1000 / FPS);
@@ -102,4 +120,15 @@ const game = () => {
         }
     }, 1000 / 60);
 };
-game();
+document.getElementById("name").addEventListener("keypress", (e) => {
+    if(e.keyCode === 13 && document.getElementById("name").value.length > 0){
+        name = document.getElementById("name").value;
+        game();
+    }
+});
+document.getElementById("play").addEventListener("click", () => {
+    if(document.getElementById("name").value.length > 0){
+        name = document.getElementById("name").value;
+        game();
+    }
+});
