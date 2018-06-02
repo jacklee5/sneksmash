@@ -1,18 +1,8 @@
-let socket = io();
 
 //frame rate
 const FPS = 30;
 //user's name
 let name = "";
-const getKey = (e) => {
-    var keynum;
-    if(window.event) {            
-      keynum = e.keyCode;
-    } else if(e.which){                   
-      keynum = e.which;
-    }
-    return String.fromCharCode(keynum);
-}
 const showPage = (index) => {
     let pages = document.getElementsByClassName("page");
     for(let i = 0; i < pages.length; i++){
@@ -52,7 +42,43 @@ const game = () => {
         OFFSET_Y = (height - GRID_SIZE * GRID_HEIGHT) / 2;
         OFFSET_X = (width - GRID_SIZE * GRID_WIDTH) / 2;
     });
-    
+
+ambience_timing = 0;
+
+const ambience = (map, ctx) => {
+    ambience_timing++;
+    switch (map) {
+        case 1:
+            x = ambience_timing % 600;
+            ctx.drawImage(GRAPHICS["bg1"], OFFSET_X, OFFSET_Y, GRID_SIZE * 40, GRID_SIZE * 20);
+            ctx.drawImage(GRAPHICS["bg1a"], GRID_SIZE * (13 + 20 / 32 - x / 16) + OFFSET_X, GRID_SIZE * (6 + 5/32 - x / 32) + OFFSET_Y, GRID_SIZE * 4, GRID_SIZE * 4);
+
+    }
+}
+
+const drawBackground = (map, ctx) => {
+    amd = ambience(map[2], ctx);
+    background = toMap(map[0], ctx);
+    foreground = toMap(map[1], ctx);
+//    DrawLayer(foreground, ctx);
+//    DrawLayer(background, ctx);
+}
+
+let socket = io();
+
+//frame rate
+const FPS = 30;
+const getKey = (e) => {
+    var keynum;
+    if(window.event) {
+      keynum = e.keyCode;
+    } else if(e.which){
+      keynum = e.which;
+    }
+    return String.fromCharCode(keynum);
+}
+const game = () => {
+
     //the current state of keys
     let keys = {};
     let DIRS = {
@@ -65,12 +91,12 @@ const game = () => {
     document.addEventListener("keydown", (e) => {
         keys[e.key.toString().toLowerCase()] = true;
     });
-    document.addEventListener("keyup", (e) => {   
+    document.addEventListener("keyup", (e) => {
         keys[e.key.toString().toLowerCase()] = false;
     });
-    
+
     let game = {};
-    
+
     socket.emit("new player", name);
     socket.on("map", (data) => {
         GRID_SIZE = Math.min(width / data.width, height / data.height);
@@ -86,13 +112,13 @@ const game = () => {
             ready++;
         }
     });
-    
+
     //game loop
     setInterval(() => {
         if(ready === 2){
-            ctx.clearRect(0, 0, width, height);
+            drawBackground(default_map, ctx);
             let players = game.players;
-            
+
             //draw players
             for(let i in players){
                 for(let j = 0; j < players[i].pos.length; j++){
@@ -108,7 +134,7 @@ const game = () => {
             }
         }
     }, 1000 / FPS);
-    
+
     setInterval(() => {
         if(ready === 2){
             socket.emit("input", {
