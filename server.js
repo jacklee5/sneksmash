@@ -109,19 +109,26 @@ setInterval(() => {
                     nextBlock = [player.pos[0][0] + 1, player.pos[0][1]];
                 }
                 if(nextBlock){
-                    console.log(nextBlock);
                     //check if block colides with existing players
                     for(let k in games[i].players){
                         for(let l = 0; l < games[i].players[k].pos.length; l++){
                             if(nextBlock && nextBlock[0] === games[i].players[k].pos[l][0] && nextBlock[1] === games[i].players[k].pos[l][1]){
-                                console.log(nextBlock);
-                                nextBlock = undefined;
-                                break;
+                                if(l === games[i].players[k].pos.length - 1){
+                                    io.in(playerRooms[k]).emit("death", {
+                                        userId: k,
+                                        pos: games[i].players[k].pos
+                                    });
+                                    delete games[i].players[k];
+                                    break;
+                                }else{
+                                    nextBlock = undefined;
+                                    break;
+                                }
                             }
                         }
                     }
                     //check if block collides with blocks
-                    if(MAPS[games[i].map][1][nextBlock[1]][nextBlock[0]] != 0){
+                    if(nextBlock && MAPS[games[i].map][1][nextBlock[1]][nextBlock[0]] != 0){
                         nextBlock = undefined;
                     }
                 }   

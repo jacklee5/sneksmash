@@ -267,6 +267,12 @@ const game = () => {
             ready++;
         }
     });
+    socket.on("death", (player) => {
+        alert(player);
+        if(player.userId === socket.id){
+            alert("oops your bad at " + player.pos);
+        }
+    })
 
     //game loop
     setInterval(() => {
