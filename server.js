@@ -81,7 +81,7 @@ io.on('connection', function(socket) {
         };
         playerRooms[socket.id] = "room" + room;
         console.log(name + " joined room " + room);
-        
+        socket.join("room" + room);
         socket.emit("map", {width: MAP_WIDTH, height: MAP_HEIGHT, map: MAPS[games["room" + room].map]})
     });
     
