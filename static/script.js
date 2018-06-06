@@ -286,7 +286,7 @@ const game = () => {
         MAP = data.map;
     });
     socket.on("room", (room) => {
-        document.getElementById("room-name").innerHTML = room.name;
+//        document.getElementById("room-name").innerHTML = room.name;
         if(room.leader === socket.id){
             isLeader = true;
         }
@@ -310,7 +310,6 @@ const game = () => {
             el.innerHTML = "Waiting for leader to start game...";
         }        
     });
-<<<<<<< HEAD
     socket.on("start", () => {
         showPage(1);
         width = canvas.offsetWidth;
@@ -348,8 +347,9 @@ const game = () => {
             if(player.userId === socket.id){
                 alert("oops your bad at " + player.pos);
             }
-        });
-
+            deathEffects(player.pos);
+        })
+        socket.emit("color", document.getElementById("colours").value);
         //game loop
         setInterval(() => {
             if(ready === 2){
@@ -358,10 +358,18 @@ const game = () => {
 
                 //draw players
                 for(let i in players){
+                    ctx.fillStyle = players[i].color;
                     for(let j = 0; j < players[i].pos.length; j++){
-                        ctx.fillStyle = "black";
                         ctx.fillRect(players[i].pos[j][0] * GRID_SIZE + OFFSET_X, players[i].pos[j][1] * GRID_SIZE + OFFSET_Y, GRID_SIZE, GRID_SIZE);
                     }
+                    ctx.fillStyle = "white";
+                    ctx.beginPath();
+                    ctx.arc((players[i].pos[0][0] + .5) * GRID_SIZE + OFFSET_X, (players[i].pos[0][1] + .5) * GRID_SIZE + OFFSET_Y, GRID_SIZE / 4, 0, 2*Math.PI); 
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.fillStyle = "black";
+                    ctx.arc((players[i].pos[0][0] + .5 + (players[i].pos[0][0] - players[i].pos[1][0])/8) * GRID_SIZE + OFFSET_X, (players[i].pos[0][1] + .5 + (players[i].pos[0][1] - players[i].pos[1][1]) / 8) * GRID_SIZE + OFFSET_Y, GRID_SIZE / 16, 0, 2*Math.PI); 
+                    ctx.fill();
                     ctx.fillStyle = "white";
                     ctx.strokeStyle = "white";
                     ctx.font = "14px Song Myung";
@@ -369,47 +377,9 @@ const game = () => {
                     let textdim = ctx.measureText(players[i].name);
                     ctx.fillText(players[i].name, players[i].pos[0][0] * GRID_SIZE + OFFSET_X + GRID_SIZE / 2, players[i].pos[0][1] * GRID_SIZE + OFFSET_Y - 14);
                 }
+                breakEffectsLoop();
             }
         }, 1000 / FPS);
-=======
-    socket.on("death", (player) => {
-        if(player.userId === socket.id){
-            alert("oops your bad at " + player.pos);
-        }
-        deathEffects(player.pos);
-    })
-    socket.emit("color", document.getElementById("colours").value);
-    //game loop
-    setInterval(() => {
-        if(ready === 2){
-            drawBackground(MAP, ctx);
-            let players = game.players;
-
-            //draw players
-            for(let i in players){
-                ctx.fillStyle = players[i].color;
-                for(let j = 0; j < players[i].pos.length; j++){
-                    ctx.fillRect(players[i].pos[j][0] * GRID_SIZE + OFFSET_X, players[i].pos[j][1] * GRID_SIZE + OFFSET_Y, GRID_SIZE, GRID_SIZE);
-                }
-                ctx.fillStyle = "white";
-                ctx.beginPath();
-                ctx.arc((players[i].pos[0][0] + .5) * GRID_SIZE + OFFSET_X, (players[i].pos[0][1] + .5) * GRID_SIZE + OFFSET_Y, GRID_SIZE / 4, 0, 2*Math.PI); 
-                ctx.fill();
-                ctx.beginPath();
-                ctx.fillStyle = "black";
-                ctx.arc((players[i].pos[0][0] + .5 + (players[i].pos[0][0] - players[i].pos[1][0])/8) * GRID_SIZE + OFFSET_X, (players[i].pos[0][1] + .5 + (players[i].pos[0][1] - players[i].pos[1][1]) / 8) * GRID_SIZE + OFFSET_Y, GRID_SIZE / 16, 0, 2*Math.PI); 
-                ctx.fill();
-                ctx.fillStyle = "white";
-                ctx.strokeStyle = "white";
-                ctx.font = "14px Song Myung";
-                ctx.textAlign = "center";
-                let textdim = ctx.measureText(players[i].name);
-                ctx.fillText(players[i].name, players[i].pos[0][0] * GRID_SIZE + OFFSET_X + GRID_SIZE / 2, players[i].pos[0][1] * GRID_SIZE + OFFSET_Y - 14);
-            }
-            breakEffectsLoop();
-        }
-    }, 1000 / FPS);
->>>>>>> 09bdc0b5d0d2f8cbf063d68bfaa3fdcdc59d737e
 
         setInterval(() => {
             if(ready === 2){

@@ -104,18 +104,15 @@ io.on('connection', function(socket) {
         }
     });
     
-<<<<<<< HEAD
     socket.on("start", () => {
         if(playerRooms[socket.id].leader = socket.id){
             io.in(playerRooms[socket.id]).emit("start");
             games[playerRooms[socket.id]].hasStarted = true;
         }
     });
-=======
     socket.on("color", (color) => {
         getPlayer(socket.id).color = color;
     })
->>>>>>> 09bdc0b5d0d2f8cbf063d68bfaa3fdcdc59d737e
 });
 //game loop
 setInterval(() => {
