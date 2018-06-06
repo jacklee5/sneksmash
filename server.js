@@ -77,7 +77,8 @@ io.on('connection', function(socket) {
             name: name,
             pos: [[x, MAP_HEIGHT - 4], [x, MAP_HEIGHT - 3], [x, MAP_HEIGHT - 2]],
             movement: {},
-            canMove: true
+            canMove: true,
+            color: "black"
         };
         playerRooms[socket.id] = "room" + room;
         console.log(name + " joined room " + room);
@@ -90,6 +91,10 @@ io.on('connection', function(socket) {
         if(player){
             player.movement = data;
         }
+    });
+    
+    socket.on("color", (color) => {
+        getPlayer(socket.id).color = color;
     })
 });
 //game loop

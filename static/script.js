@@ -205,12 +205,55 @@ const drawBackground = (map, ctx) => {
     amd = ambience(map[2], ctx);
     background = toMap(map[0], ctx);
     foreground = toMap(map[1], ctx);
-    
+    //ctx.clearRect(0,0,width,height);
     //make sure nothing is drawn outside of the map
     ctx.clearRect(0, 0, OFFSET_X, height);
     ctx.clearRect(width - OFFSET_X, 0, OFFSET_X, height);
     ctx.clearRect(0, 0, width, OFFSET_Y);
     ctx.clearRect(0, height - OFFSET_Y, width, OFFSET_Y);
+}
+
+var deathParticles = [];
+
+const deathEffects = (pos) => {
+    sounds = ["static/audio/damage.mp3", "static/audio/aaa.mp3"];
+    playSound(sounds[Math.floor(Math.random() * sounds.length)]);
+    deathParticles.push([pos[0], 50]);
+    deathParticles.push([pos[1], 50]);
+    deathParticles.push([pos[2], 50]);
+}
+
+const breakEffectsLoop = () => {
+    var destroyParticle = [];
+    for (let i = 0; i < deathParticles.length; i++) {
+        var x = 25 - (deathParticles[i][1] / 2);
+        var y = (x - 20) * (x - 2) / -10 + 4;
+        var z = y / -30;
+        if (deathParticles[i][1] !== 0) {
+            deathParticles[i][1]--;
+            ctx.fillStyle = "rgb(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ")";
+            ctx.fillRect(OFFSET_X + (deathParticles[i][0][0] + .5 + x / 100) * GRID_SIZE, OFFSET_Y + (deathParticles[i][0][1] + .5 + z) * GRID_SIZE, GRID_SIZE / 4, GRID_SIZE / 4);
+        
+            ctx.fillStyle = "rgb(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ")";
+            ctx.fillRect(OFFSET_X + (deathParticles[i][0][0] + .5 - x / 100) * GRID_SIZE, OFFSET_Y + (deathParticles[i][0][1] + .5 + z) * GRID_SIZE, GRID_SIZE / 4, GRID_SIZE / 4);
+        } else {
+            destroyParticle.push[i];
+        }
+    }
+    for (let i = 0; i < destroyParticle.length; i++) {
+        deathParticle.splice[destroyParticle[i]];
+    }
+}
+
+
+
+const playSound = (file) => {
+    let snd1 = new Audio();
+    let src1 = document.createElement("source");
+    src1.type = "audio/mpeg";
+    src1.src = file;
+    snd1.appendChild(src1);
+    snd1.play();
 }
 
 let socket = io();
@@ -268,12 +311,12 @@ const game = () => {
         }
     });
     socket.on("death", (player) => {
-        alert(player);
         if(player.userId === socket.id){
             alert("oops your bad at " + player.pos);
         }
+        deathEffects(player.pos);
     })
-
+    socket.emit("color", document.getElementById("colours").value);
     //game loop
     setInterval(() => {
         if(ready === 2){
@@ -282,10 +325,18 @@ const game = () => {
 
             //draw players
             for(let i in players){
+                ctx.fillStyle = players[i].color;
                 for(let j = 0; j < players[i].pos.length; j++){
-                    ctx.fillStyle = "black";
                     ctx.fillRect(players[i].pos[j][0] * GRID_SIZE + OFFSET_X, players[i].pos[j][1] * GRID_SIZE + OFFSET_Y, GRID_SIZE, GRID_SIZE);
                 }
+                ctx.fillStyle = "white";
+                ctx.beginPath();
+                ctx.arc((players[i].pos[0][0] + .5) * GRID_SIZE + OFFSET_X, (players[i].pos[0][1] + .5) * GRID_SIZE + OFFSET_Y, GRID_SIZE / 4, 0, 2*Math.PI); 
+                ctx.fill();
+                ctx.beginPath();
+                ctx.fillStyle = "black";
+                ctx.arc((players[i].pos[0][0] + .5 + (players[i].pos[0][0] - players[i].pos[1][0])/8) * GRID_SIZE + OFFSET_X, (players[i].pos[0][1] + .5 + (players[i].pos[0][1] - players[i].pos[1][1]) / 8) * GRID_SIZE + OFFSET_Y, GRID_SIZE / 16, 0, 2*Math.PI); 
+                ctx.fill();
                 ctx.fillStyle = "white";
                 ctx.strokeStyle = "white";
                 ctx.font = "14px Song Myung";
@@ -293,6 +344,7 @@ const game = () => {
                 let textdim = ctx.measureText(players[i].name);
                 ctx.fillText(players[i].name, players[i].pos[0][0] * GRID_SIZE + OFFSET_X + GRID_SIZE / 2, players[i].pos[0][1] * GRID_SIZE + OFFSET_Y - 14);
             }
+            breakEffectsLoop();
         }
     }, 1000 / FPS);
 

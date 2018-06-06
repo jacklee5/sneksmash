@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/jacklee5/sneksmash#readme",
   "dependencies": {
+    "all": "0.0.0",
     "express": "^4.16.3",
     "nodemon": "^1.17.5",
     "socket.io": "^2.1.1"
