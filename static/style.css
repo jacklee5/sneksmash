@@ -37,3 +37,20 @@ input{
 input:focus{
     outline:none;
 }
+#room{
+    padding:16px;
+}
+#room .player{
+    background:#F5F5F5;
+    padding:16px;
+    display:block;
+    width:25%;
+    box-sizing: border-box;
+}
+#room .button{
+    width:25%;
+    box-sizing: border-box;
+}
+#error{
+    color:red;
+}

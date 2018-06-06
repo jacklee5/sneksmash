@@ -1,4 +1,3 @@
-
 //frame rate
 const FPS = 30;
 
@@ -224,33 +223,15 @@ const getKey = (e) => {
     }
     return String.fromCharCode(keynum);
 }
+const startGame = () => {
+    socket.emit("start");
+}
+socket.on("error", (err) => {
+    document.getElementById("error").innerHTML = err;
+});
 const game = () => {
-    showPage(1);
-    width = canvas.offsetWidth;
-    height = canvas.offsetHeight;
-    canvas.width = width;
-    canvas.height = height;
-    GRID_SIZE = Math.floor(Math.min(width / GRID_WIDTH, height / GRID_HEIGHT));
-    OFFSET_Y = (height - GRID_SIZE * GRID_HEIGHT) / 2;
-    OFFSET_X = (width - GRID_SIZE * GRID_WIDTH) / 2;
-    //the current state of keys
-    let keys = {};
-    let DIRS = {
-        UP: 0,
-        DOWN: 1,
-        LEFT: 2,
-        RIGHT: 3
-    }
-    let dir = -1;
-    document.addEventListener("keydown", (e) => {
-        keys[e.key.toString().toLowerCase()] = true;
-    });
-    document.addEventListener("keyup", (e) => {
-        keys[e.key.toString().toLowerCase()] = false;
-    });
-
-    let game = {};
-
+    showPage(2);
+    let isLeader;
     socket.emit("new player", name);
     socket.on("map", (data) => {
         GRID_SIZE = Math.min(width / data.width, height / data.height);
@@ -261,51 +242,103 @@ const game = () => {
         ready++;
         MAP = data.map;
     });
-    socket.on("state", (data) => {
-        game = data;
-        if(ready < 2){
-            ready++;
+    socket.on("room", (room) => {
+        document.getElementById("room-name").innerHTML = room.name;
+        if(room.leader === socket.id){
+            isLeader = true;
         }
+        hasStarted = room.hasStarted;
     });
-    socket.on("death", (player) => {
-        alert(player);
-        if(player.userId === socket.id){
-            alert("oops your bad at " + player.pos);
+    socket.on("players", (data) => {
+        let players = data.players;
+        let hasStarted = data.hasStarted;
+        let leader = data.leader;
+        let el = document.getElementById("players");
+        el.innerHTML = "";
+        for(let i in players){
+            el.innerHTML += `<p class = 'player'>${players[i].name}</p>`;
         }
-    })
+        el = document.getElementById("msg");
+        if(leader === socket.id){
+            el.innerHTML = "<a class = 'button' onclick = 'startGame();'>Play</a>"
+        }else if(hasStarted){
+            el.innerHTML = "Game has already started!";   
+        }else{
+            el.innerHTML = "Waiting for leader to start game...";
+        }        
+    });
+    socket.on("start", () => {
+        showPage(1);
+        width = canvas.offsetWidth;
+        height = canvas.offsetHeight;
+        canvas.width = width;
+        canvas.height = height;
+        GRID_SIZE = Math.floor(Math.min(width / GRID_WIDTH, height / GRID_HEIGHT));
+        OFFSET_Y = (height - GRID_SIZE * GRID_HEIGHT) / 2;
+        OFFSET_X = (width - GRID_SIZE * GRID_WIDTH) / 2;
+        //the current state of keys
+        let keys = {};
+        let DIRS = {
+            UP: 0,
+            DOWN: 1,
+            LEFT: 2,
+            RIGHT: 3
+        }
+        let dir = -1;
+        document.addEventListener("keydown", (e) => {
+            keys[e.key.toString().toLowerCase()] = true;
+        });
+        document.addEventListener("keyup", (e) => {
+            keys[e.key.toString().toLowerCase()] = false;
+        });
 
-    //game loop
-    setInterval(() => {
-        if(ready === 2){
-            drawBackground(MAP, ctx);
-            let players = game.players;
+        let game = {};
 
-            //draw players
-            for(let i in players){
-                for(let j = 0; j < players[i].pos.length; j++){
-                    ctx.fillStyle = "black";
-                    ctx.fillRect(players[i].pos[j][0] * GRID_SIZE + OFFSET_X, players[i].pos[j][1] * GRID_SIZE + OFFSET_Y, GRID_SIZE, GRID_SIZE);
-                }
-                ctx.fillStyle = "white";
-                ctx.strokeStyle = "white";
-                ctx.font = "14px Song Myung";
-                ctx.textAlign = "center";
-                let textdim = ctx.measureText(players[i].name);
-                ctx.fillText(players[i].name, players[i].pos[0][0] * GRID_SIZE + OFFSET_X + GRID_SIZE / 2, players[i].pos[0][1] * GRID_SIZE + OFFSET_Y - 14);
+        socket.on("state", (data) => {
+            game = data;
+            if(ready < 2){
+                ready++;
             }
-        }
-    }, 1000 / FPS);
+        });
+        socket.on("death", (player) => {
+            if(player.userId === socket.id){
+                alert("oops your bad at " + player.pos);
+            }
+        });
 
-    setInterval(() => {
-        if(ready === 2){
-            socket.emit("input", {
-                UP: keys.arrowup || keys.w,
-                DOWN: keys.arrowdown || keys.s,
-                LEFT: keys.arrowleft || keys.a,
-                RIGHT: keys.arrowright || keys.d
-            });
-        }
-    }, 1000 / 60);
+        //game loop
+        setInterval(() => {
+            if(ready === 2){
+                drawBackground(MAP, ctx);
+                let players = game.players;
+
+                //draw players
+                for(let i in players){
+                    for(let j = 0; j < players[i].pos.length; j++){
+                        ctx.fillStyle = "black";
+                        ctx.fillRect(players[i].pos[j][0] * GRID_SIZE + OFFSET_X, players[i].pos[j][1] * GRID_SIZE + OFFSET_Y, GRID_SIZE, GRID_SIZE);
+                    }
+                    ctx.fillStyle = "white";
+                    ctx.strokeStyle = "white";
+                    ctx.font = "14px Song Myung";
+                    ctx.textAlign = "center";
+                    let textdim = ctx.measureText(players[i].name);
+                    ctx.fillText(players[i].name, players[i].pos[0][0] * GRID_SIZE + OFFSET_X + GRID_SIZE / 2, players[i].pos[0][1] * GRID_SIZE + OFFSET_Y - 14);
+                }
+            }
+        }, 1000 / FPS);
+
+        setInterval(() => {
+            if(ready === 2){
+                socket.emit("input", {
+                    UP: keys.arrowup || keys.w,
+                    DOWN: keys.arrowdown || keys.s,
+                    LEFT: keys.arrowleft || keys.a,
+                    RIGHT: keys.arrowright || keys.d
+                });
+            }
+        }, 1000 / 60);
+    });
 };
 document.getElementById("name").addEventListener("keypress", (e) => {
     if(e.keyCode === 13 && document.getElementById("name").value.length > 0){

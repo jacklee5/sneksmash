@@ -1,4 +1,4 @@
-<!DOCTYPE HTML>
+    <!DOCTYPE HTML>
 <html>
     <head>
         <title>SnekSmash</title>
@@ -7,16 +7,29 @@
         <script src="/socket.io/socket.io.js"></script>
     </head>
     <body>
+        
+        <!--Landing page-->
         <div class = "page start">
             <div class = "center">
                 <h1>SnekSmash</h1>
+                <p id = "error"></p>
                 <input autocomplete = "off" type = "text" placeholder = "What's your name?" maxlength = "20" id = "name" autofocus>
                 <a class = "button" id = "play">Play!</a>
                 <a class = "button">Help!</a>
             </div>
         </div>
+        
+        <!--Game page-->
         <div class = "page">
             <canvas id = "canvas"></canvas>
+        </div>
+        
+        <!--Room page-->
+        <div class = "page" id = "room">
+            <h1>Current Room</h1>
+            <h2>Players</h2>
+            <div id = "players"></div>
+            <p id = "msg"></p>
         </div>
         <script src = "static/script.js"></script>
     </body>

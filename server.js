@@ -55,6 +55,13 @@ const MAPS = [default_map];
 //}
 //fs.writeFileSync("out.txt", JSON.stringify(toArr(default_map[1])));
 
+//room joining
+app.get("/rooms/:id", (req, res) => {
+    let roomName = req.params.id;
+    
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 io.on('connection', function(socket) {
     socket.on("new player", (name) => {
         let room = 1;
@@ -69,7 +76,9 @@ io.on('connection', function(socket) {
         }else{
             games["room" + room] = {
                 players: {},
-                map: Math.floor(Math.random() * MAPS.length)
+                map: Math.floor(Math.random() * MAPS.length),
+                leader: socket.id,
+                hasStarted: false
             };
             x = Math.floor(MAP_WIDTH / (MAX_PLAYERS + 1));
         }
@@ -80,9 +89,11 @@ io.on('connection', function(socket) {
             canMove: true
         };
         playerRooms[socket.id] = "room" + room;
-        console.log(name + " joined room " + room);
+        console.log(name + " joined room" + room);
         socket.join("room" + room);
-        socket.emit("map", {width: MAP_WIDTH, height: MAP_HEIGHT, map: MAPS[games["room" + room].map]})
+        socket.emit("room", {name: "room" + room, leader: games["room" + room].leader});
+        io.in("room" + room).emit("players", {players: games["room" + room].players, hasStarted: games["room" + room].hasStarted, leader: games["room" + room].leader});
+        socket.emit("map", {width: MAP_WIDTH, height: MAP_HEIGHT, map: MAPS[games["room" + room].map]});
     });
     
     socket.on("input", (data) => {
@@ -90,55 +101,64 @@ io.on('connection', function(socket) {
         if(player){
             player.movement = data;
         }
-    })
+    });
+    
+    socket.on("start", () => {
+        if(playerRooms[socket.id].leader = socket.id){
+            io.in(playerRooms[socket.id]).emit("start");
+            games[playerRooms[socket.id]].hasStarted = true;
+        }
+    });
 });
 //game loop
 setInterval(() => {
     for(let i in games){
-        for(let j in games[i].players){
-            let player = games[i].players[j];
-            if(player.canMove){
-                let nextBlock;
-                if(player.movement.UP){
-                    nextBlock = [player.pos[0][0], player.pos[0][1] - 1];
-                }else if(player.movement.DOWN){
-                    nextBlock = [player.pos[0][0], player.pos[0][1] + 1];
-                }else if(player.movement.LEFT){
-                    nextBlock = [player.pos[0][0] - 1, player.pos[0][1]];
-                }else if(player.movement.RIGHT){
-                    nextBlock = [player.pos[0][0] + 1, player.pos[0][1]];
-                }
-                if(nextBlock){
-                    //check if block colides with existing players
-                    for(let k in games[i].players){
-                        for(let l = 0; l < games[i].players[k].pos.length; l++){
-                            if(nextBlock && nextBlock[0] === games[i].players[k].pos[l][0] && nextBlock[1] === games[i].players[k].pos[l][1]){
-                                if(l === games[i].players[k].pos.length - 1){
-                                    io.in(playerRooms[k]).emit("death", {
-                                        userId: k,
-                                        pos: games[i].players[k].pos
-                                    });
-                                    delete games[i].players[k];
-                                    break;
-                                }else{
-                                    nextBlock = undefined;
-                                    break;
+        if(games[i].hasStarted){
+            for(let j in games[i].players){
+                let player = games[i].players[j];
+                if(player.canMove){
+                    let nextBlock;
+                    if(player.movement.UP){
+                        nextBlock = [player.pos[0][0], player.pos[0][1] - 1];
+                    }else if(player.movement.DOWN){
+                        nextBlock = [player.pos[0][0], player.pos[0][1] + 1];
+                    }else if(player.movement.LEFT){
+                        nextBlock = [player.pos[0][0] - 1, player.pos[0][1]];
+                    }else if(player.movement.RIGHT){
+                        nextBlock = [player.pos[0][0] + 1, player.pos[0][1]];
+                    }
+                    if(nextBlock){
+                        //check if block colides with existing players
+                        for(let k in games[i].players){
+                            for(let l = 0; l < games[i].players[k].pos.length; l++){
+                                if(nextBlock && nextBlock[0] === games[i].players[k].pos[l][0] && nextBlock[1] === games[i].players[k].pos[l][1]){
+                                    if(l === games[i].players[k].pos.length - 1){
+                                        io.in(playerRooms[k]).emit("death", {
+                                            userId: k,
+                                            pos: games[i].players[k].pos
+                                        });
+                                        delete games[i].players[k];
+                                        break;
+                                    }else{
+                                        nextBlock = undefined;
+                                        break;
+                                    }
                                 }
                             }
                         }
+                        //check if block collides with blocks
+                        if(nextBlock && MAPS[games[i].map][1][nextBlock[1]][nextBlock[0]] != 0){
+                            nextBlock = undefined;
+                        }
+                    }   
+                    if(nextBlock){
+                        player.pos.unshift(nextBlock);
+                        player.pos.pop();
+                        player.canMove = false;
+                        setTimeout(() => {
+                            player.canMove = true;
+                        }, MOVE_COOLDOWN);
                     }
-                    //check if block collides with blocks
-                    if(nextBlock && MAPS[games[i].map][1][nextBlock[1]][nextBlock[0]] != 0){
-                        nextBlock = undefined;
-                    }
-                }   
-                if(nextBlock){
-                    player.pos.unshift(nextBlock);
-                    player.pos.pop();
-                    player.canMove = false;
-                    setTimeout(() => {
-                        player.canMove = true;
-                    }, MOVE_COOLDOWN);
                 }
             }
         }
