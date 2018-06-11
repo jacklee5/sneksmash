@@ -54,3 +54,15 @@ input:focus{
 #error{
     color:red;
 }
+input[type="color"]{
+    cursor:pointer;
+}
+#joiner{
+    display:block;
+    margin:0px;
+    padding:0px;
+    background:#F5F5F5;
+    height:0px;
+    transition:.3s all;
+    overflow:hidden;
+}

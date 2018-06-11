@@ -269,8 +269,9 @@ const getKey = (e) => {
 const startGame = () => {
     socket.emit("start");
 }
-socket.on("error", (err) => {
-    document.getElementById("error").innerHTML = err;
+socket.on("msg", (msg) => {
+    if(msg.type === "error")
+        document.getElementById("error").innerHTML = msg.content;
 });
 const game = () => {
     showPage(2);
@@ -286,7 +287,7 @@ const game = () => {
         MAP = data.map;
     });
     socket.on("room", (room) => {
-//        document.getElementById("room-name").innerHTML = room.name;
+        document.getElementById("room-name").innerHTML = room.name;
         if(room.leader === socket.id){
             isLeader = true;
         }
@@ -405,3 +406,13 @@ document.getElementById("play").addEventListener("click", () => {
         game();
     }
 });
+
+const showJoiner = () => {
+    document.getElementById('joiner').style.height='100px';
+    document.getElementById('joiner').style.margin='8px';
+    document.getElementById('joiner').style.padding='8px';
+}
+
+const joinRoom = () => {
+    socket.emit("join", document.getElementById("join-code").value);
+}

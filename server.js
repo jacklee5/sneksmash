@@ -55,13 +55,6 @@ const MAPS = [default_map];
 //}
 //fs.writeFileSync("out.txt", JSON.stringify(toArr(default_map[1])));
 
-//room joining
-app.get("/rooms/:id", (req, res) => {
-    let roomName = req.params.id;
-    
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
 io.on('connection', function(socket) {
     socket.on("new player", (name) => {
         let room = 1;
@@ -105,14 +98,25 @@ io.on('connection', function(socket) {
     });
     
     socket.on("start", () => {
-        if(playerRooms[socket.id].leader = socket.id){
+        console.log(playerRooms[socket.id].leader);
+        console.log(socket.id);
+        if(games[playerRooms[socket.id]].leader === socket.id){
             io.in(playerRooms[socket.id]).emit("start");
             games[playerRooms[socket.id]].hasStarted = true;
         }
     });
+    
     socket.on("color", (color) => {
         getPlayer(socket.id).color = color;
-    })
+    });
+    
+    socket.on("join", (code) => {
+        if(Object.keys(games[code]).length < MAX_PLAYERS){
+            socket.emit("msg", {type: "error", content: "The room can be joined"});
+        }else{
+            socket.emit("msg", {type: "error", content: "The room is full!"})
+        }
+    });
 });
 //game loop
 setInterval(() => {
@@ -167,7 +171,7 @@ setInterval(() => {
             }
         }
     }
-    for(let i in playerRooms){
-        io.to(i).emit("state", games[playerRooms[i]]);
+    for(let i in games){
+        io.in(i).emit("state", games[i]);
     }
 }, 1 / 60);
