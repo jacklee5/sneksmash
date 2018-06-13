@@ -11,19 +11,29 @@
         <!--Landing page-->
         <div class = "page start">
             <div class = "center">
-                <h1>SnekSmash</h1>
-                <p id = "error"></p>
-                <input autocomplete = "off" type = "text" placeholder = "What's your name?" maxlength = "20" id = "name" autofocus>
-                <a class = "button" id = "play">Play!</a>
-                <a class = "button" id = "join" onclick = "showJoiner();">Join Game</a>
-                <div id = "joiner">
-                    <input placeholder="Enter room code..." id = "join-code">
-                    <a class = "button" onclick="joinRoom();">Join</a>
+                <div class = "panel">
+                    <h1>SnekSmash</h1>
+                    <p id = "error"></p>
+                    <input autocomplete = "off" type = "text" placeholder = "What's your name?" maxlength = "20" id = "name" autofocus>
+                    <a class = "button" id = "play">Play!</a>
+                    <a class = "button" id = "join" onclick = "showJoiner();">Join Game</a>
+                    <div id = "joiner">
+                        <input placeholder="Enter room code..." id = "join-code">
+                        <a class = "button" onclick="joinRoom();">Join</a>
+                    </div>
+                    <a class = "button" id = "help-button">Help!</a>
+                    <input type="color" id="colours" value="#ff0000">
+                    <label>Choose a colour!</label>
                 </div>
-                <a class = "button">Help!</a>
-                <input type="color" id="colours" value="#ff0000">
-                <label>Choose a colour!</label>
+                <div class = "panel" id = "help">
+                    <h2>Help</h2>
+                    <h3>Controls</h3>
+                    <b>Movement: </b> WASD/Arrow Keys
+                    <h3>Gameplay</h3>
+                    At the start of the game, there will be up to 4 players with you. The goal of the game is to kill these other players by hitting their "tail" (the last block).
+                </div>
             </div>
+            
         </div>
         
         <!--Game page-->

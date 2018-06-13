@@ -57,37 +57,39 @@ const MAPS = [default_map];
 
 io.on('connection', function(socket) {
     socket.on("new player", (name) => {
-        let room = 1;
-        while(games["room" + room] && Object.keys(games["room" + room].players).length >= MAX_PLAYERS){
-            room++;
-        }
-        let x;
-        let player;
-        if(games["room" + room]){
-            let num = Object.keys(games["room" + room].players).length + 1;
-            x = num * Math.floor(MAP_WIDTH / (MAX_PLAYERS + 1));
-        }else{
-            games["room" + room] = {
-                players: {},
-                map: Math.floor(Math.random() * MAPS.length),
-                leader: socket.id,
-                hasStarted: false
+        if(!playerRooms[socket.id]){
+            let room = 1;
+            while(games["room" + room] && (Object.keys(games["room" + room].players).length >= MAX_PLAYERS || games["room" + room].hasStarted)){
+                room++;
+            }
+            let x;
+            let player;
+            if(games["room" + room]){
+                let num = Object.keys(games["room" + room].players).length + 1;
+                x = num * Math.floor(MAP_WIDTH / (MAX_PLAYERS + 1));
+            }else{
+                games["room" + room] = {
+                    players: {},
+                    map: Math.floor(Math.random() * MAPS.length),
+                    leader: socket.id,
+                    hasStarted: false
+                };
+                x = Math.floor(MAP_WIDTH / (MAX_PLAYERS + 1));
+            }
+            games["room" + room].players[socket.id] = {
+                name: name,
+                pos: [[x, MAP_HEIGHT - 4], [x, MAP_HEIGHT - 3], [x, MAP_HEIGHT - 2]],
+                movement: {},
+                canMove: true,
+                color: "black"
             };
-            x = Math.floor(MAP_WIDTH / (MAX_PLAYERS + 1));
+            playerRooms[socket.id] = "room" + room;
+            console.log(name + " joined room" + room);
+            socket.join("room" + room);
+            socket.emit("room", {name: "room" + room, leader: games["room" + room].leader});
+            io.in("room" + room).emit("players", {players: games["room" + room].players, hasStarted: games["room" + room].hasStarted, leader: games["room" + room].leader});
+            socket.emit("map", {width: MAP_WIDTH, height: MAP_HEIGHT, map: MAPS[games["room" + room].map]});
         }
-        games["room" + room].players[socket.id] = {
-            name: name,
-            pos: [[x, MAP_HEIGHT - 4], [x, MAP_HEIGHT - 3], [x, MAP_HEIGHT - 2]],
-            movement: {},
-            canMove: true,
-            color: "black"
-        };
-        playerRooms[socket.id] = "room" + room;
-        console.log(name + " joined room" + room);
-        socket.join("room" + room);
-        socket.emit("room", {name: "room" + room, leader: games["room" + room].leader});
-        io.in("room" + room).emit("players", {players: games["room" + room].players, hasStarted: games["room" + room].hasStarted, leader: games["room" + room].leader});
-        socket.emit("map", {width: MAP_WIDTH, height: MAP_HEIGHT, map: MAPS[games["room" + room].map]});
     });
     
     socket.on("input", (data) => {
@@ -98,8 +100,6 @@ io.on('connection', function(socket) {
     });
     
     socket.on("start", () => {
-        console.log(playerRooms[socket.id].leader);
-        console.log(socket.id);
         if(games[playerRooms[socket.id]].leader === socket.id){
             io.in(playerRooms[socket.id]).emit("start");
             games[playerRooms[socket.id]].hasStarted = true;
@@ -110,11 +110,33 @@ io.on('connection', function(socket) {
         getPlayer(socket.id).color = color;
     });
     
-    socket.on("join", (code) => {
-        if(Object.keys(games[code]).length < MAX_PLAYERS){
-            socket.emit("msg", {type: "error", content: "The room can be joined"});
+    socket.on("join", (data) => {
+        let code = data.code;
+        let name = data.name;
+        if(games[code]){
+            if(Object.keys(games[code].players).length < MAX_PLAYERS){
+                let num = Object.keys(games[code].players).length + 1;
+                x = num * Math.floor(MAP_WIDTH / (MAX_PLAYERS + 1));   
+                socket.emit("msg", {type: "error", content: "Joining game..."});
+                games[code].players[socket.id] = {
+                    name: name,
+                    pos: [[x, MAP_HEIGHT - 4], [x, MAP_HEIGHT - 3], [x, MAP_HEIGHT - 2]],
+                    movement: {},
+                    canMove: true,
+                    color: "black"
+                };
+                playerRooms[socket.id] = code;
+                socket.emit("success");
+                console.log(name + " joined " + code);
+                socket.join(code);
+                socket.emit("room", {name: code, leader: games[code].leader});
+                io.in(code).emit("players", {players: games[code].players, hasStarted: games[code].hasStarted, leader: games[code].leader});
+                socket.emit("map", {width: MAP_WIDTH, height: MAP_HEIGHT, map: MAPS[games[code].map]});
+            }else{
+                socket.emit("msg", {type: "error", content: "The room is full!"})
+            }
         }else{
-            socket.emit("msg", {type: "error", content: "The room is full!"})
+            socket.emit("msg", {type: "error", content: "The code you entered is invalid!"})
         }
     });
 });
@@ -146,6 +168,7 @@ setInterval(() => {
                                             pos: games[i].players[k].pos
                                         });
                                         delete games[i].players[k];
+                                        delete playerRooms[k];
                                         break;
                                     }else{
                                         nextBlock = undefined;
@@ -174,4 +197,4 @@ setInterval(() => {
     for(let i in games){
         io.in(i).emit("state", games[i]);
     }
-}, 1 / 60);
+}, 1000 / 60);

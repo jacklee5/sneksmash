@@ -189,6 +189,29 @@ const toMap = (map) => {
 
 ambience_timing = 0;
 
+function setCookie(cname, cvalue, exdays) {
+  var d = new Date();
+  d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+  var expires = "expires=" + d.toUTCString();
+  document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+
+function getCookie(cname) {
+  var name = cname + "=";
+  var decodedCookie = decodeURIComponent(document.cookie);
+  var ca = decodedCookie.split(';');
+  for (var i = 0; i < ca.length; i++) {
+    var c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
+
 const ambience = (map, ctx) => {
     ambience_timing++;
     switch (map) {
@@ -273,11 +296,16 @@ socket.on("msg", (msg) => {
     if(msg.type === "error")
         document.getElementById("error").innerHTML = msg.content;
 });
+socket.on("success", () => {
+    game();
+})
 const game = () => {
     showPage(2);
+    setCookie("username", name, 365);
     let isLeader;
     socket.emit("new player", name);
     socket.on("map", (data) => {
+        console.log("on map");
         GRID_SIZE = Math.min(width / data.width, height / data.height);
         OFFSET_Y = (height - GRID_SIZE * data.height) / 2;
         OFFSET_X = (width - GRID_SIZE * data.width) / 2;
@@ -287,13 +315,15 @@ const game = () => {
         MAP = data.map;
     });
     socket.on("room", (room) => {
+        showPage(2);
+        console.log("on room");
         document.getElementById("room-name").innerHTML = room.name;
         if(room.leader === socket.id){
             isLeader = true;
         }
-        hasStarted = room.hasStarted;
     });
     socket.on("players", (data) => {
+        console.log("on players");
         let players = data.players;
         let hasStarted = data.hasStarted;
         let leader = data.leader;
@@ -355,7 +385,6 @@ const game = () => {
         setInterval(() => {
             if(ready === 2){
                 drawBackground(MAP, ctx);
-                let players = game.players;
 
                 //draw players
                 for(let i in players){
@@ -394,6 +423,7 @@ const game = () => {
         }, 1000 / 60);
     });
 };
+document.getElementById("name").value = getCookie("username");
 document.getElementById("name").addEventListener("keypress", (e) => {
     if(e.keyCode === 13 && document.getElementById("name").value.length > 0){
         name = document.getElementById("name").value;
@@ -406,6 +436,15 @@ document.getElementById("play").addEventListener("click", () => {
         game();
     }
 });
+document.getElementById("join-code").addEventListener("keypress", (e) => {
+    if(e.keyCode === 13 && document.getElementById("name").value.length > 0){
+        joinRoom();
+    }
+});
+document.getElementById("help-button").addEventListener("click", () => {
+    document.getElementById("help").style.width = "200px";
+    document.getElementById("help").style["white-space"] = "initial";
+})
 
 const showJoiner = () => {
     document.getElementById('joiner').style.height='100px';
@@ -414,5 +453,10 @@ const showJoiner = () => {
 }
 
 const joinRoom = () => {
-    socket.emit("join", document.getElementById("join-code").value);
+    name = document.getElementById("name").value;
+    if(name.length > 0){
+        socket.emit("join", {code: document.getElementById("join-code").value, name: name});
+    }else{
+        document.getElementById("error").innerHTML = "Please enter a name";
+    }
 }

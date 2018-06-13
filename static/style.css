@@ -19,6 +19,19 @@ canvas{
     top:50%;
     transform:translate(-50%, -50%);
 }
+.panel{
+    display:inline-block;
+    width:200px;
+    margin:16px;
+    vertical-align: top;
+}
+#help{
+    white-space: nowrap;
+    max-height: 350px;
+    width:0px;
+    transition:.3s all;
+    overflow:hidden;
+}
 .button{
     display:block;
     margin:8px 0px;
