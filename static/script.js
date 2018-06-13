@@ -153,6 +153,14 @@ const loadImages = (urls) => {
     {
       name: "231",
       link: "static/tiles/231.png"
+    },
+    {
+      name: "0",
+      link: "static/sprites/Boot.png"
+    },
+    {
+      name: "1",
+      link: "static/sprites/Shield.png"
     }
   ]);
 }
@@ -227,6 +235,14 @@ const drawBackground = (map, ctx) => {
     amd = ambience(map[2], ctx);
     background = toMap(map[0], ctx);
     foreground = toMap(map[1], ctx);
+    for (let i = 0; i < 40; i++) {
+        for (let j = 0; j < 20; j++) {
+            if (game.items && game.items[i] && game.items[i][j]) {
+                console.log("item");
+                ctx.drawImage(GRAPHICS[game.items[i][j].toString()], GRID_SIZE * i + OFFSET_X, GRID_SIZE * j + OFFSET_Y, GRID_SIZE, GRID_SIZE);
+            }
+        }
+    }
     //ctx.clearRect(0,0,width,height);
     //make sure nothing is drawn outside of the map
     ctx.clearRect(0, 0, OFFSET_X, height);

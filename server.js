@@ -57,6 +57,7 @@ const MAPS = [default_map];
 
 io.on('connection', function(socket) {
     socket.on("new player", (name) => {
+<<<<<<< HEAD
         if(!playerRooms[socket.id]){
             let room = 1;
             while(games["room" + room] && (Object.keys(games["room" + room].players).length >= MAX_PLAYERS || games["room" + room].hasStarted)){
@@ -82,6 +83,24 @@ io.on('connection', function(socket) {
                 movement: {},
                 canMove: true,
                 color: "black"
+=======
+        let room = 1;
+        while(games["room" + room] && Object.keys(games["room" + room].players).length >= MAX_PLAYERS){
+            room++;
+        }
+        let x;
+        let player;
+        if(games["room" + room]){
+            let num = Object.keys(games["room" + room].players).length + 1;
+            x = num * Math.floor(MAP_WIDTH / (MAX_PLAYERS + 1));
+        }else{
+            games["room" + room] = {
+                players: {},
+                map: Math.floor(Math.random() * MAPS.length),
+                leader: socket.id,
+                hasStarted: false,
+                items: []
+>>>>>>> aea20f45fc044ffa04db6a960a13a08bc9a30cd7
             };
             playerRooms[socket.id] = "room" + room;
             console.log(name + " joined room" + room);
@@ -141,6 +160,7 @@ io.on('connection', function(socket) {
     });
 });
 //game loop
+let puTime = 0;
 setInterval(() => {
     for(let i in games){
         if(games[i].hasStarted){
@@ -180,6 +200,21 @@ setInterval(() => {
                         //check if block collides with blocks
                         if(nextBlock && MAPS[games[i].map][1][nextBlock[1]][nextBlock[0]] != 0){
                             nextBlock = undefined;
+                        }
+                        puTime++;
+                        if(puTime & 600 === 0) {
+                            for (let xc = 0; xc < 40; xc++) {
+                                for (let yc = 0; yc < 20; yc++) {
+                                    if (!MAPS[games[i].map][1][xc][yc] && (!games[i].items[xc][yc] || games[i].items[xc][yc] === 0)) {
+                                        if (Math.random() < .1) {
+                                            if(!games[i].items[xc]){
+                                                games[i].items[xc] = [];
+                                            }
+                                            games[i].items[xc][yc] = Math.floor(Math.random() * 2);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }   
                     if(nextBlock){
