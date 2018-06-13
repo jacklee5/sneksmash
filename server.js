@@ -71,7 +71,8 @@ io.on('connection', function(socket) {
                 players: {},
                 map: Math.floor(Math.random() * MAPS.length),
                 leader: socket.id,
-                hasStarted: false
+                hasStarted: false,
+                items: []
             };
             x = Math.floor(MAP_WIDTH / (MAX_PLAYERS + 1));
         }
@@ -119,6 +120,7 @@ io.on('connection', function(socket) {
     });
 });
 //game loop
+let puTime = 0;
 setInterval(() => {
     for(let i in games){
         if(games[i].hasStarted){
@@ -158,6 +160,21 @@ setInterval(() => {
                         if(nextBlock && MAPS[games[i].map][1][nextBlock[1]][nextBlock[0]] != 0){
                             nextBlock = undefined;
                         }
+                        puTime++;
+                        if(puTime & 600 === 0) {
+                            for (let xc = 0; xc < 40; xc++) {
+                                for (let yc = 0; yc < 20; yc++) {
+                                    if (!MAPS[games[i].map][1][xc][yc] && (!games[i].items[xc][yc] || games[i].items[xc][yc] === 0)) {
+                                        if (Math.random() < .1) {
+                                            if(!games[i].items[xc]){
+                                                games[i].items[xc] = [];
+                                            }
+                                            games[i].items[xc][yc] = Math.floor(Math.random() * 2);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }   
                     if(nextBlock){
                         player.pos.unshift(nextBlock);
@@ -174,4 +191,4 @@ setInterval(() => {
     for(let i in games){
         io.in(i).emit("state", games[i]);
     }
-}, 1 / 60);
+}, 1000 / 60);
