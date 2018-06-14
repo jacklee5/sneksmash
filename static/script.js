@@ -235,15 +235,6 @@ const drawBackground = (map, ctx) => {
     amd = ambience(map[2], ctx);
     background = toMap(map[0], ctx);
     foreground = toMap(map[1], ctx);
-    for (let i = 0; i < 40; i++) {
-        for (let j = 0; j < 20; j++) {
-            if (game.items && game.items[i] && game.items[i][j]) {
-                console.log("item");
-                ctx.drawImage(GRAPHICS[game.items[i][j].toString()], GRID_SIZE * i + OFFSET_X, GRID_SIZE * j + OFFSET_Y, GRID_SIZE, GRID_SIZE);
-            }
-        }
-    }
-    //ctx.clearRect(0,0,width,height);
     //make sure nothing is drawn outside of the map
     ctx.clearRect(0, 0, OFFSET_X, height);
     ctx.clearRect(width - OFFSET_X, 0, OFFSET_X, height);
@@ -401,13 +392,25 @@ const game = () => {
         setInterval(() => {
             if(ready === 2){
                 drawBackground(MAP, ctx);
-
+                //draw items
+                for(let i = 0; i < game.items.length; i++){
+                    ctx.drawImage(GRAPHICS[game.items[i][2]], game.items[i][0] * GRID_SIZE + OFFSET_X, game.items[i][1] * GRID_SIZE + OFFSET_Y, GRID_SIZE, GRID_SIZE);
+                }
+                
+                let players = game.players;
+                
                 //draw players
                 for(let i in players){
                     ctx.fillStyle = players[i].color;
                     for(let j = 0; j < players[i].pos.length; j++){
                         ctx.fillRect(players[i].pos[j][0] * GRID_SIZE + OFFSET_X, players[i].pos[j][1] * GRID_SIZE + OFFSET_Y, GRID_SIZE, GRID_SIZE);
                     }
+                    //draw item
+                    if(players[i].item != -1){
+                        let block = players[i].pos[players[i].pos.length-1]
+                        ctx.drawImage(GRAPHICS[players[i].item], block[0] * GRID_SIZE + OFFSET_X, block[1] * GRID_SIZE + OFFSET_Y, GRID_SIZE, GRID_SIZE);
+                    }
+                    console.log(players[i].item);
                     ctx.fillStyle = "white";
                     ctx.beginPath();
                     ctx.arc((players[i].pos[0][0] + .5) * GRID_SIZE + OFFSET_X, (players[i].pos[0][1] + .5) * GRID_SIZE + OFFSET_Y, GRID_SIZE / 4, 0, 2*Math.PI); 
