@@ -160,7 +160,15 @@ const loadImages = (urls) => {
     },
     {
       name: "1",
-      link: "static/sprites/Shield.png"
+      link: "static/sprites/BetterShield.png"
+    },
+    {
+      name: "2",
+      link: "static/sprites/Onigiri.png"
+    },
+    {
+      name: "3",
+      link: "static/sprites/BadOnigiri.png"
     }
   ]);
 }

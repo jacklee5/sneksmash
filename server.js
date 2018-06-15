@@ -3,7 +3,7 @@ var http = require('http');
 var path = require('path');
 var socketIO = require('socket.io');
 var app = express();
-var server = http.Server(app);
+var server = new http.Server(app);
 var io = socketIO(server);
 var fs = require("fs");
 app.set('port', 5000);
@@ -19,14 +19,14 @@ server.listen(5000, function() {
 
 let games = {};
 let playerRooms = {};
-const MAX_PLAYERS = 2;
+const MAX_PLAYERS = 4;
 const MAP_WIDTH = 40;
 const MAP_HEIGHT = 20;
 const MOVE_COOLDOWN = 150;
 //maximum amount of items spawned
 const MAX_ITEMS = 5;
 //interval items spawn at (seconds * server tick)
-const ITEM_INTERVAL = 20 * 60;
+const ITEM_INTERVAL = 1 * 60;
 const getPlayer = (id) => {
     return (games[playerRooms[id]]||{players:{}}).players[id];
 }
@@ -174,7 +174,7 @@ setInterval(() => {
                             for(let l = 0; l < games[i].players[k].pos.length; l++){
                                 if(nextBlock && nextBlock[0] === games[i].players[k].pos[l][0] && nextBlock[1] === games[i].players[k].pos[l][1]){
                                     if(l === games[i].players[k].pos.length - 1){
-                                        if(games[i].players[k].item === 1){
+                                        if(games[i].players[k].item === 1 || j === k && games[i].players[j].pos.length === 2){
                                             nextBlock = undefined;
                                         }else{
                                             io.in(playerRooms[k]).emit("death", {
@@ -199,51 +199,65 @@ setInterval(() => {
                     }   
                     if(nextBlock){
                         player.pos.unshift(nextBlock);
+                        
+                        //item collisions
+                        for(let k = 0; k < games[i].items.length; k++){
+                            if(nextBlock[0] === games[i].items[k][0] && nextBlock[1] === games[i].items[k][1]){
+                                let type = games[i].items[k][2];
+                                if(type === 0 || type === 1){
+                                    const ITEM_COOLDOWN = 5 * 60;
+                                    if(type === player.item){
+                                        player.itemCooldown += ITEM_COOLDOWN;
+                                    }else{
+                                        player.itemCooldown = ITEM_COOLDOWN;
+                                    }
+    //                                if(type === 0){
+    //                                    player.moveCooldown *= 0.8;
+    //                                    console.log(player.moveCooldown);
+    //                                    
+    //                                    //TODO: decide on a powerup cooldown
+    //                                    setTimeout(() => {
+    //                                        player.moveCooldown /= 0.8;
+    //                                        console.log(player.moveCooldown);
+    //                                        player.item = -1;
+    //                                    }, 10 * 1000)
+    //                                }
+                                    //reset items
+                                    player.moveCooldown = MOVE_COOLDOWN;
+
+                                    //apply item (shield doesn't need to be applied)
+                                    switch(type){
+                                        //boot 
+                                        case 0:
+                                            player.moveCooldown = MOVE_COOLDOWN / 2;
+                                            break;    
+                                    }
+
+                                    console.log(type);
+                                    player.item = type;
+                                }else{
+                                    switch(type){
+                                        //normal food
+                                        case 2:
+                                            player.pos.push(player.pos[player.pos[player.pos.length - 1]])
+                                            player.pos.push();
+                                            break;
+                                        //anti-food
+                                        case 3:
+                                            if(player.pos.length > 3){
+                                                player.pos.pop();
+                                            }
+                                    }
+                                }
+                                games[i].items.splice(k, 1);
+                                k--;
+                            }
+                        }
                         player.pos.pop();
                         player.canMove = false;
                         setTimeout(() => {
                             player.canMove = true;
                         }, player.moveCooldown);
-                        
-                        //item collisions
-                        for(let k = 0; k < games[i].items.length; k++){
-                            if(nextBlock[0] === games[i].items[k][0] && nextBlock[1] === games[i].items[k][1]){
-                                console.log(["boot", "shield"][games[i].items[k][2]]);
-                                let type = games[i].items[k][2];
-                                const ITEM_COOLDOWN = 5 * 60;
-                                if(type === player.item){
-                                    player.itemCooldown += ITEM_COOLDOWN;
-                                }else{
-                                    player.itemCooldown = ITEM_COOLDOWN;
-                                }
-//                                if(type === 0){
-//                                    player.moveCooldown *= 0.8;
-//                                    console.log(player.moveCooldown);
-//                                    
-//                                    //TODO: decide on a powerup cooldown
-//                                    setTimeout(() => {
-//                                        player.moveCooldown /= 0.8;
-//                                        console.log(player.moveCooldown);
-//                                        player.item = -1;
-//                                    }, 10 * 1000)
-//                                }
-                                //reset items
-                                player.moveCooldown = MOVE_COOLDOWN;
-                                
-                                //apply item (shield doesn't need to be applied)
-                                switch(type){
-                                    //boot 
-                                    case 0:
-                                        player.moveCooldown = MOVE_COOLDOWN / 2;
-                                        break;        
-                                }
-                                
-                                console.log(type);
-                                player.item = type;
-                                games[i].items.splice(k, 1);
-                                k--;
-                            }
-                        }
                     }
                 }
                 //item placement
@@ -252,7 +266,7 @@ setInterval(() => {
                     let canPlace;
                     while(!canPlace){
                         canPlace = true;
-                        newItem = [Math.floor(Math.random() * MAPS[games[i].map][0][0].length), Math.floor(Math.random() * MAPS[games[i].map][0].length), Math.floor(Math.random() * 2)];
+                        newItem = [Math.floor(Math.random() * MAPS[games[i].map][0][0].length), Math.floor(Math.random() * MAPS[games[i].map][0].length)];
                         //check if in block
                         if(MAPS[games[i].map][1][newItem[1]][newItem[0]] !== 0){
                             canPlace = false;
@@ -275,11 +289,10 @@ setInterval(() => {
                             }
                         }
                     }
-                    newItem[2] = Math.floor(Math.random() * 2);
+                    newItem[2] = Math.floor(Math.random() * 4);
                     console.log(newItem);
                     games[i].items.push(newItem);
                 }
-                puTime++;
                 //item update
                 player.itemCooldown--;
                 if(player.itemCooldown === 0){
@@ -289,6 +302,7 @@ setInterval(() => {
             }
         }
     }
+    puTime++;
     for(let i in games){
         io.in(i).emit("state", games[i]);
     }
