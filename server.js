@@ -3,7 +3,7 @@ var http = require('http');
 var path = require('path');
 var socketIO = require('socket.io');
 var app = express();
-var server = http.Server(app);
+var server = new http.Server(app);
 var io = socketIO(server);
 var fs = require("fs");
 app.set('port', 5000);
@@ -19,10 +19,14 @@ server.listen(5000, function() {
 
 let games = {};
 let playerRooms = {};
-const MAX_PLAYERS = 2;
+const MAX_PLAYERS = 4;
 const MAP_WIDTH = 40;
 const MAP_HEIGHT = 20;
 const MOVE_COOLDOWN = 150;
+//maximum amount of items spawned
+const MAX_ITEMS = 5;
+//interval items spawn at (seconds * server tick)
+const ITEM_INTERVAL = 1 * 60;
 const getPlayer = (id) => {
     return (games[playerRooms[id]]||{players:{}}).players[id];
 }
@@ -57,7 +61,6 @@ const MAPS = [default_map];
 
 io.on('connection', function(socket) {
     socket.on("new player", (name) => {
-<<<<<<< HEAD
         if(!playerRooms[socket.id]){
             let room = 1;
             while(games["room" + room] && (Object.keys(games["room" + room].players).length >= MAX_PLAYERS || games["room" + room].hasStarted)){
@@ -73,7 +76,8 @@ io.on('connection', function(socket) {
                     players: {},
                     map: Math.floor(Math.random() * MAPS.length),
                     leader: socket.id,
-                    hasStarted: false
+                    hasStarted: false,
+                    items: [],
                 };
                 x = Math.floor(MAP_WIDTH / (MAX_PLAYERS + 1));
             }
@@ -82,25 +86,9 @@ io.on('connection', function(socket) {
                 pos: [[x, MAP_HEIGHT - 4], [x, MAP_HEIGHT - 3], [x, MAP_HEIGHT - 2]],
                 movement: {},
                 canMove: true,
-                color: "black"
-=======
-        let room = 1;
-        while(games["room" + room] && Object.keys(games["room" + room].players).length >= MAX_PLAYERS){
-            room++;
-        }
-        let x;
-        let player;
-        if(games["room" + room]){
-            let num = Object.keys(games["room" + room].players).length + 1;
-            x = num * Math.floor(MAP_WIDTH / (MAX_PLAYERS + 1));
-        }else{
-            games["room" + room] = {
-                players: {},
-                map: Math.floor(Math.random() * MAPS.length),
-                leader: socket.id,
-                hasStarted: false,
-                items: []
->>>>>>> aea20f45fc044ffa04db6a960a13a08bc9a30cd7
+                color: "black",
+                moveCooldown: MOVE_COOLDOWN,
+                item: -1
             };
             playerRooms[socket.id] = "room" + room;
             console.log(name + " joined room" + room);
@@ -142,7 +130,10 @@ io.on('connection', function(socket) {
                     pos: [[x, MAP_HEIGHT - 4], [x, MAP_HEIGHT - 3], [x, MAP_HEIGHT - 2]],
                     movement: {},
                     canMove: true,
-                    color: "black"
+                    color: "black",
+                    moveCooldown: MOVE_COOLDOWN,
+                    item: -1,
+                    itemCooldown: 0
                 };
                 playerRooms[socket.id] = code;
                 socket.emit("success");
@@ -183,12 +174,16 @@ setInterval(() => {
                             for(let l = 0; l < games[i].players[k].pos.length; l++){
                                 if(nextBlock && nextBlock[0] === games[i].players[k].pos[l][0] && nextBlock[1] === games[i].players[k].pos[l][1]){
                                     if(l === games[i].players[k].pos.length - 1){
-                                        io.in(playerRooms[k]).emit("death", {
-                                            userId: k,
-                                            pos: games[i].players[k].pos
-                                        });
-                                        delete games[i].players[k];
-                                        delete playerRooms[k];
+                                        if(games[i].players[k].item === 1 || j === k && games[i].players[j].pos.length === 2){
+                                            nextBlock = undefined;
+                                        }else{
+                                            io.in(playerRooms[k]).emit("death", {
+                                                userId: k,
+                                                pos: games[i].players[k].pos
+                                            });
+                                            delete games[i].players[k];
+                                            delete playerRooms[k];
+                                        }
                                         break;
                                     }else{
                                         nextBlock = undefined;
@@ -201,34 +196,113 @@ setInterval(() => {
                         if(nextBlock && MAPS[games[i].map][1][nextBlock[1]][nextBlock[0]] != 0){
                             nextBlock = undefined;
                         }
-                        puTime++;
-                        if(puTime & 600 === 0) {
-                            for (let xc = 0; xc < 40; xc++) {
-                                for (let yc = 0; yc < 20; yc++) {
-                                    if (!MAPS[games[i].map][1][xc][yc] && (!games[i].items[xc][yc] || games[i].items[xc][yc] === 0)) {
-                                        if (Math.random() < .1) {
-                                            if(!games[i].items[xc]){
-                                                games[i].items[xc] = [];
-                                            }
-                                            games[i].items[xc][yc] = Math.floor(Math.random() * 2);
-                                        }
-                                    }
-                                }
-                            }
-                        }
                     }   
                     if(nextBlock){
                         player.pos.unshift(nextBlock);
+                        
+                        //item collisions
+                        for(let k = 0; k < games[i].items.length; k++){
+                            if(nextBlock[0] === games[i].items[k][0] && nextBlock[1] === games[i].items[k][1]){
+                                let type = games[i].items[k][2];
+                                if(type === 0 || type === 1){
+                                    const ITEM_COOLDOWN = 5 * 60;
+                                    if(type === player.item){
+                                        player.itemCooldown += ITEM_COOLDOWN;
+                                    }else{
+                                        player.itemCooldown = ITEM_COOLDOWN;
+                                    }
+    //                                if(type === 0){
+    //                                    player.moveCooldown *= 0.8;
+    //                                    console.log(player.moveCooldown);
+    //                                    
+    //                                    //TODO: decide on a powerup cooldown
+    //                                    setTimeout(() => {
+    //                                        player.moveCooldown /= 0.8;
+    //                                        console.log(player.moveCooldown);
+    //                                        player.item = -1;
+    //                                    }, 10 * 1000)
+    //                                }
+                                    //reset items
+                                    player.moveCooldown = MOVE_COOLDOWN;
+
+                                    //apply item (shield doesn't need to be applied)
+                                    switch(type){
+                                        //boot 
+                                        case 0:
+                                            player.moveCooldown = MOVE_COOLDOWN / 2;
+                                            break;    
+                                    }
+
+                                    console.log(type);
+                                    player.item = type;
+                                }else{
+                                    switch(type){
+                                        //normal food
+                                        case 2:
+                                            player.pos.push(player.pos[player.pos[player.pos.length - 1]])
+                                            player.pos.push();
+                                            break;
+                                        //anti-food
+                                        case 3:
+                                            if(player.pos.length > 3){
+                                                player.pos.pop();
+                                            }
+                                    }
+                                }
+                                games[i].items.splice(k, 1);
+                                k--;
+                            }
+                        }
                         player.pos.pop();
                         player.canMove = false;
                         setTimeout(() => {
                             player.canMove = true;
-                        }, MOVE_COOLDOWN);
+                        }, player.moveCooldown);
                     }
+                }
+                //item placement
+                if(puTime % ITEM_INTERVAL === 0 && games[i].items.length < MAX_ITEMS) {
+                    let newItem;
+                    let canPlace;
+                    while(!canPlace){
+                        canPlace = true;
+                        newItem = [Math.floor(Math.random() * MAPS[games[i].map][0][0].length), Math.floor(Math.random() * MAPS[games[i].map][0].length)];
+                        //check if in block
+                        if(MAPS[games[i].map][1][newItem[1]][newItem[0]] !== 0){
+                            canPlace = false;
+                        }
+
+                        //check if in player
+                        for(let k in games[i].players){
+                            let pos = games[i].players[k].pos;
+                            for(let l = 0; l < pos.length; l++){
+                                if(pos[0] === newItem[0] && pos[1] === newItem[1]){
+                                    canPlace = false;
+                                }
+                            }
+                        }
+                        
+                        //check if block exists
+                        for(let k = 0; k < games[i].items.length; k++){
+                            if(games[i].items[k][0] === newItem[0] && games[i].items[k][1] === newItem[1]){
+                                canPlace = false;
+                            }
+                        }
+                    }
+                    newItem[2] = Math.floor(Math.random() * 4);
+                    console.log(newItem);
+                    games[i].items.push(newItem);
+                }
+                //item update
+                player.itemCooldown--;
+                if(player.itemCooldown === 0){
+                    player.item = -1;
+                    player.moveCooldown = MOVE_COOLDOWN;
                 }
             }
         }
     }
+    puTime++;
     for(let i in games){
         io.in(i).emit("state", games[i]);
     }
