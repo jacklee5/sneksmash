@@ -26,7 +26,7 @@ const MOVE_COOLDOWN = 150;
 //maximum amount of items spawned
 const MAX_ITEMS = 5;
 //interval items spawn at (seconds * server tick)
-const ITEM_INTERVAL = 1 * 60;
+const ITEM_INTERVAL = 20 * 60;
 const getPlayer = (id) => {
     return (games[playerRooms[id]]||{players:{}}).players[id];
 }

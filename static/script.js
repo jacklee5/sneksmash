@@ -395,7 +395,7 @@ const game = () => {
             }
             deathEffects(player.pos);
         })
-        socket.emit("color", document.getElementById("colours").value);
+        socket.emit("color", document.getElementById("colours").jscolor.toHEXString());
         //game loop
         setInterval(() => {
             if(ready === 2){
