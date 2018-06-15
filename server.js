@@ -185,6 +185,9 @@ setInterval(() => {
                                             delete playerRooms[k];
                                             if (Object.keys(games[i].players).length === 1) {
                                                 io.to(i).emit("win", j);
+                                                setTimeout(() => {
+                                                    delete games[i];
+                                                }, 10 * 1000);                                                
                                             }
                                         }
                                         break;
@@ -214,17 +217,6 @@ setInterval(() => {
                                     }else{
                                         player.itemCooldown = ITEM_COOLDOWN;
                                     }
-    //                                if(type === 0){
-    //                                    player.moveCooldown *= 0.8;
-    //                                    console.log(player.moveCooldown);
-    //                                    
-    //                                    //TODO: decide on a powerup cooldown
-    //                                    setTimeout(() => {
-    //                                        player.moveCooldown /= 0.8;
-    //                                        console.log(player.moveCooldown);
-    //                                        player.item = -1;
-    //                                    }, 10 * 1000)
-    //                                }
                                     //reset items
                                     player.moveCooldown = MOVE_COOLDOWN;
 

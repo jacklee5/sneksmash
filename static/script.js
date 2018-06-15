@@ -317,6 +317,7 @@ socket.on("success", () => {
 const game = () => {
     showPage(2);
     setCookie("username", name, 365);
+    setCookie("color", document.getElementById("colours").jscolor.toHEXString());
     let isLeader;
     socket.emit("new player", name);
     socket.on("map", (data) => {
@@ -391,13 +392,21 @@ const game = () => {
         });
         socket.on("death", (player) => {
             if(player.userId === socket.id){
-                alert("oops your bad at " + player.pos);
+                document.getElementById("darken").style.display = "block";
+                let results = document.getElementById("results")
+                results.style.display = "block";
+                results.innerHTML = "<h1>You died!</h1><a class = 'button' onclick = 'location.reload()'>Play again</a>"
             }
             deathEffects(player.pos);
         })
         socket.emit("color", document.getElementById("colours").jscolor.toHEXString());
         socket.on("win", (player) => {
-            alert("You won!");
+            if(player === socket.id){
+                document.getElementById("darken").style.display = "block";
+                let results = document.getElementById("results")
+                results.style.display = "block";
+                results.innerHTML = "<h1>You win!</h1><a class = 'button' onclick = 'location.reload()'>Play again</a>"
+            }
         })
         //game loop
         setInterval(() => {
@@ -455,6 +464,9 @@ const game = () => {
     });
 };
 document.getElementById("name").value = getCookie("username");
+setTimeout(() => {
+    document.getElementById('colours').jscolor.fromString(getCookie("color"));
+}, 0)
 document.getElementById("name").addEventListener("keypress", (e) => {
     if(e.keyCode === 13 && document.getElementById("name").value.length > 0){
         name = document.getElementById("name").value;

@@ -23,7 +23,7 @@
                         <a class = "button" onclick="joinRoom();">Join</a>
                     </div>
                     <button
-                        class="jscolor {valueElement:null,value:'000000',position:'top',onFineChange:'updateColor(this)'}"
+                        class="jscolor {valueElement:null,value:'000000',position:'top'}"
                         style="width:100%;padding:16px;border:none;"
                         id = "colours">
                         Pick a color
@@ -43,6 +43,8 @@
         <!--Game page-->
         <div class = "page">
             <canvas id = "canvas"></canvas>
+            <!--darken-->
+            <div id = "darken"></div>
             <!--Win/lose Text-->
             <div id = "results"></div>
         </div>
