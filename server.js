@@ -183,6 +183,9 @@ setInterval(() => {
                                             });
                                             delete games[i].players[k];
                                             delete playerRooms[k];
+                                            if (Object.keys(games[i].players).length === 1) {
+                                                io.to(i).emit("win", j);
+                                            }
                                         }
                                         break;
                                     }else{

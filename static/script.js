@@ -255,9 +255,9 @@ var deathParticles = [];
 const deathEffects = (pos) => {
     sounds = ["static/audio/damage.mp3", "static/audio/aaa.mp3"];
     playSound(sounds[Math.floor(Math.random() * sounds.length)]);
-    deathParticles.push([pos[0], 50]);
-    deathParticles.push([pos[1], 50]);
-    deathParticles.push([pos[2], 50]);
+    for (let i = 0; i < pos.length; i++) {
+        deathParticles.push([pos[i], 50]);
+    }
 }
 
 const breakEffectsLoop = () => {
@@ -395,6 +395,9 @@ const game = () => {
             }
             deathEffects(player.pos);
         })
+        socket.on("win", (player) => {
+            alert("You won!");
+        })
         socket.emit("color", document.getElementById("colours").value);
         //game loop
         setInterval(() => {
@@ -402,7 +405,7 @@ const game = () => {
                 drawBackground(MAP, ctx);
                 //draw items
                 for(let i = 0; i < game.items.length; i++){
-                    ctx.drawImage(GRAPHICS[game.items[i][2]], game.items[i][0] * GRID_SIZE + OFFSET_X, game.items[i][1] * GRID_SIZE + OFFSET_Y, GRID_SIZE, GRID_SIZE);
+                    ctx.drawImage(GRAPHICS[game.items[i][2]], game.items[i][0] * GRID_SIZE + OFFSET_X, game.items[i][1] * GRID_SIZE + (Math.sin(ambience_timing / 10)) / 4 * GRID_SIZE + OFFSET_Y, GRID_SIZE, GRID_SIZE);
                 }
                 
                 let players = game.players;
@@ -416,6 +419,7 @@ const game = () => {
                     //draw item
                     if(players[i].item != -1){
                         let block = players[i].pos[players[i].pos.length-1]
+                        if (players[i].itemCooldown > 120 || Math.floor(players[i].itemCooldown / 10) % 2 === 0)
                         ctx.drawImage(GRAPHICS[players[i].item], block[0] * GRID_SIZE + OFFSET_X, block[1] * GRID_SIZE + OFFSET_Y, GRID_SIZE, GRID_SIZE);
                     }
                     console.log(players[i].item);
