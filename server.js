@@ -90,6 +90,9 @@ io.on('connection', function(socket) {
                 moveCooldown: MOVE_COOLDOWN,
                 item: -1
             };
+            if(!games["room" + room].leader){
+                games["room" + room].leader = socket.id;
+            }
             playerRooms[socket.id] = "room" + room;
             console.log(name + " joined room" + room);
             socket.join("room" + room);
@@ -135,6 +138,9 @@ io.on('connection', function(socket) {
                     item: -1,
                     itemCooldown: 0
                 };
+                if(!games[code].leader){
+                    games[code].leader = socket.id;
+                }
                 playerRooms[socket.id] = code;
                 socket.emit("success");
                 console.log(name + " joined " + code);
@@ -151,7 +157,21 @@ io.on('connection', function(socket) {
     });
     
     socket.on("disconnect", () => {
-        if(playerRooms[socket.id]){
+        if(playerRooms[socket.id] && games[playerRooms[socket.id]]){
+            if(games[playerRooms[socket.id]].leader === socket.id){
+                if(Object.keys(games[playerRooms[socket.id]].players).length > 1){
+                    let players = games[playerRooms[socket.id]].players;
+                    let room = games[playerRooms[socket.id]];
+                    for(let i in players){
+                        if(i != socket.id){
+                            room.leader = i;
+                        }
+                    }
+                }
+                else{
+                    games[playerRooms[socket.id]].leader = undefined;
+                }
+            }
             delete games[playerRooms[socket.id]].players[socket.id];
             io.in(playerRooms[socket.id]).emit("players", {players: games[playerRooms[socket.id]].players, hasStarted: games[playerRooms[socket.id]].hasStarted, leader: games[playerRooms[socket.id]].leader});
             delete playerRooms[socket.id];
@@ -263,45 +283,45 @@ setInterval(() => {
                         }, player.moveCooldown);
                     }
                 }
-                //item placement
-                if(puTime % ITEM_INTERVAL === 0 && games[i].items.length < MAX_ITEMS) {
-                    let newItem;
-                    let canPlace;
-                    while(!canPlace){
-                        canPlace = true;
-                        newItem = [Math.floor(Math.random() * MAPS[games[i].map][0][0].length), Math.floor(Math.random() * MAPS[games[i].map][0].length)];
-                        //check if in block
-                        if(MAPS[games[i].map][1][newItem[1]][newItem[0]] !== 0){
-                            canPlace = false;
-                        }
-
-                        //check if in player
-                        for(let k in games[i].players){
-                            let pos = games[i].players[k].pos;
-                            for(let l = 0; l < pos.length; l++){
-                                if(pos[0] === newItem[0] && pos[1] === newItem[1]){
-                                    canPlace = false;
-                                }
-                            }
-                        }
-                        
-                        //check if block exists
-                        for(let k = 0; k < games[i].items.length; k++){
-                            if(games[i].items[k][0] === newItem[0] && games[i].items[k][1] === newItem[1]){
-                                canPlace = false;
-                            }
-                        }
-                    }
-                    newItem[2] = Math.floor(Math.random() * 4);
-                    console.log(newItem);
-                    games[i].items.push(newItem);
-                }
                 //item update
                 player.itemCooldown--;
                 if(player.itemCooldown === 0){
                     player.item = -1;
                     player.moveCooldown = MOVE_COOLDOWN;
                 }
+            }
+            //item placement
+            if(puTime % ITEM_INTERVAL === 0 && games[i].items.length < MAX_ITEMS) {
+                let newItem;
+                let canPlace;
+                while(!canPlace){
+                    canPlace = true;
+                    newItem = [Math.floor(Math.random() * MAPS[games[i].map][0][0].length), Math.floor(Math.random() * MAPS[games[i].map][0].length)];
+                    //check if in block
+                    if(MAPS[games[i].map][1][newItem[1]][newItem[0]] !== 0){
+                        canPlace = false;
+                    }
+
+                    //check if in player
+                    for(let k in games[i].players){
+                        let pos = games[i].players[k].pos;
+                        for(let l = 0; l < pos.length; l++){
+                            if(pos[0] === newItem[0] && pos[1] === newItem[1]){
+                                canPlace = false;
+                            }
+                        }
+                    }
+
+                    //check if block exists
+                    for(let k = 0; k < games[i].items.length; k++){
+                        if(games[i].items[k][0] === newItem[0] && games[i].items[k][1] === newItem[1]){
+                            canPlace = false;
+                        }
+                    }
+                }
+                newItem[2] = Math.floor(Math.random() * 4);
+                console.log(newItem);
+                games[i].items.push(newItem);
             }
         }
     }
