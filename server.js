@@ -149,6 +149,14 @@ io.on('connection', function(socket) {
             socket.emit("msg", {type: "error", content: "The code you entered is invalid!"})
         }
     });
+    
+    socket.on("disconnect", () => {
+        if(playerRooms[socket.id]){
+            delete games[playerRooms[socket.id]].players[socket.id];
+            io.in(playerRooms[socket.id]).emit("players", {players: games[playerRooms[socket.id]].players, hasStarted: games[playerRooms[socket.id]].hasStarted, leader: games[playerRooms[socket.id]].leader});
+            delete playerRooms[socket.id];
+        }
+    })
 });
 //game loop
 let puTime = 0;
