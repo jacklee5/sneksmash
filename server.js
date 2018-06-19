@@ -212,7 +212,9 @@ setInterval(() => {
                                             delete games[i].players[k];
                                             delete playerRooms[k];
                                             if (Object.keys(games[i].players).length === 1) {
-                                                io.to(i).emit("win", j);
+                                                let key = Object.keys(games[i].players)[0];
+                                                io.to(i).emit("win", key);
+                                                
                                                 setTimeout(() => {
                                                     delete games[i];
                                                 }, 10 * 1000);                                                
