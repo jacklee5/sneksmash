@@ -311,6 +311,12 @@ const spectate = () => {
     document.getElementById("darken").style.display = "none";
     document.getElementById("results").style.display = "none";
 }
+const createGame = () => {
+    if(document.getElementById("name").value.length <= 20 && document.getElementById("name").value.length > 0){
+        socket.emit("create game", document.getElementById("name").value);
+        game();
+    }
+}
 socket.on("msg", (msg) => {
     if(msg.type === "error")
         document.getElementById("error").innerHTML = msg.content;
@@ -350,7 +356,10 @@ const game = () => {
         let el = document.getElementById("players");
         el.innerHTML = "";
         for(let i in players){
-            el.innerHTML += `<p class = 'player'>${players[i].name}</p>`;
+            let newEl = document.createElement("p");
+            newEl.className = "player";
+            newEl.textContent = players[i].name;
+            el.appendChild(newEl);
         }
         el = document.getElementById("msg");
         if(leader === socket.id){
@@ -489,8 +498,9 @@ document.getElementById("join-code").addEventListener("keypress", (e) => {
     }
 });
 document.getElementById("help-button").addEventListener("click", () => {
-    document.getElementById("help").style.width = "200px";
-    document.getElementById("help").style["white-space"] = "initial";
+    document.getElementById("help").style.position = "relative";
+    document.getElementById("help").style.left = "0px";
+    document.getElementById("help").style.opacity = 1;
 })
 
 const showJoiner = () => {

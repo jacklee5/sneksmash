@@ -10,13 +10,21 @@
         
         <!--Landing page-->
         <div class = "page start">
-            <div class = "center">
+            <div class = "center" style = "white-space: nowrap;">
+                <div class = "panel" id = "help">
+                    <h2 style = "margin-top:0px;">Help</h2>
+                    <h3>Controls</h3>
+                    <b>Movement: </b> WASD/Arrow Keys
+                    <h3>Gameplay</h3>
+                    At the start of the game, there will be up to 4 players with you. The goal of the game is to kill these other players by hitting their "tail" (the last block). Occasionally around the map, you will also find powerups laying around that will aid in your victory.
+                </div>
                 <div class = "panel">
-                    <h1>SnekSmash</h1>
+                    <h1 style = "margin-top:0px;">SnekSmash</h1>
                     <p id = "error"></p>
                     <input autocomplete = "off" type = "text" placeholder = "What's your name?" maxlength = "20" id = "name" autofocus>
                     <a class = "button" id = "play">Play!</a>
                     <a class = "button" id = "help-button">Help!</a>
+                    <a class = "button" id = "create" onclick = "createGame();">Create Game</a>
                     <a class = "button" id = "join" onclick = "showJoiner();">Join Game</a>
                     <div id = "joiner">
                         <input placeholder="Enter room code..." id = "join-code">
@@ -29,13 +37,11 @@
                         Pick a color
                     </button>
                 </div>
-                <div class = "panel" id = "help">
-                    <h2>Help</h2>
-                    <h3>Controls</h3>
-                    <b>Movement: </b> WASD/Arrow Keys
-                    <h3>Gameplay</h3>
-                    At the start of the game, there will be up to 4 players with you. The goal of the game is to kill these other players by hitting their "tail" (the last block).
-                </div>
+                <div class = "panel">
+                    <h2 style = "margin-top:0px;">What's new!</h2>
+                    <b>6/20/2018</b>
+                    <p>Create private rooms with the "Create Game" button!</p>
+                </div>                
             </div>
             
         </div>

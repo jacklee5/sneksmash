@@ -24,13 +24,19 @@ body{
     width:200px;
     margin:16px;
     vertical-align: top;
+    white-space: normal;
+    overflow:auto;
+}
+.panel::-webkit-scrollbar{
+    display:none;
 }
 #help{
-    white-space: nowrap;
-    max-height: 350px;
-    width:0px;
     transition:.3s all;
-    overflow:hidden;
+    overflow:auto;
+    position:relative;
+    left:240px;
+    opacity:0;
+    z-index:-1;
 }
 .button{
     display:block;
