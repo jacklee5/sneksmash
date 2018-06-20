@@ -19,14 +19,14 @@ server.listen(5000, function() {
 
 let games = {};
 let playerRooms = {};
-const MAX_PLAYERS = 4;
+const MAX_PLAYERS = 5;
 const MAP_WIDTH = 40;
 const MAP_HEIGHT = 20;
 const MOVE_COOLDOWN = 150;
 //maximum amount of items spawned
 const MAX_ITEMS = 5;
 //interval items spawn at (seconds * server tick)
-const ITEM_INTERVAL = 20 * 60;
+const ITEM_INTERVAL = 7.5 * 60;
 const getPlayer = (id) => {
     return (games[playerRooms[id]]||{players:{}}).players[id];
 }
@@ -110,21 +110,25 @@ io.on('connection', function(socket) {
     });
     
     socket.on("start", () => {
-        if(games[playerRooms[socket.id]].leader === socket.id){
-            io.in(playerRooms[socket.id]).emit("start");
-            games[playerRooms[socket.id]].hasStarted = true;
-        }
+        try{
+            if(games[playerRooms[socket.id]].leader === socket.id){
+                io.in(playerRooms[socket.id]).emit("start");
+                games[playerRooms[socket.id]].hasStarted = true;
+            }
+        }catch(err){}
     });
     
     socket.on("color", (color) => {
+        try{
         getPlayer(socket.id).color = color;
+        }catch(err){}
     });
     
     socket.on("join", (data) => {
         let code = data.code;
         let name = data.name;
         if(games[code]){
-            if(Object.keys(games[code].players).length < MAX_PLAYERS){
+            if(Object.keys(games[code].players).length < MAX_PLAYERS && !games[code].hasStarted){
                 let num = Object.keys(games[code].players).length + 1;
                 x = num * Math.floor(MAP_WIDTH / (MAX_PLAYERS + 1));   
                 socket.emit("msg", {type: "error", content: "Joining game..."});
@@ -308,7 +312,7 @@ setInterval(() => {
                     for(let k in games[i].players){
                         let pos = games[i].players[k].pos;
                         for(let l = 0; l < pos.length; l++){
-                            if(pos[0] === newItem[0] && pos[1] === newItem[1]){
+                            if(pos[l][0] === newItem[0] && pos[l][1] === newItem[1]){
                                 canPlace = false;
                             }
                         }

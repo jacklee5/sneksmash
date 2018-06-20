@@ -307,6 +307,10 @@ const getKey = (e) => {
 const startGame = () => {
     socket.emit("start");
 }
+const spectate = () => {
+    document.getElementById("darken").style.display = "none";
+    document.getElementById("results").style.display = "none";
+}
 socket.on("msg", (msg) => {
     if(msg.type === "error")
         document.getElementById("error").innerHTML = msg.content;
@@ -317,7 +321,7 @@ socket.on("success", () => {
 const game = () => {
     showPage(2);
     setCookie("username", name, 365);
-    setCookie("color", document.getElementById("colours").jscolor.toHEXString());
+    setCookie("color", document.getElementById("colours").jscolor.toHEXString(), 365);
     let isLeader;
     socket.emit("new player", name);
     socket.on("map", (data) => {
@@ -395,7 +399,7 @@ const game = () => {
                 document.getElementById("darken").style.display = "block";
                 let results = document.getElementById("results")
                 results.style.display = "block";
-                results.innerHTML = "<h1>You died!</h1><a class = 'button' onclick = 'location.reload()'>Play again</a>"
+                results.innerHTML = "<h1>You died!</h1><a class = 'button' onclick = 'location.reload()'>Play again</a><a class = 'button' onclick = 'spectate()'>Spectate</a>"
             }
             deathEffects(player.pos);
         })
