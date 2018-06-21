@@ -501,6 +501,7 @@ document.getElementById("help-button").addEventListener("click", () => {
     document.getElementById("help").style.position = "relative";
     document.getElementById("help").style.left = "0px";
     document.getElementById("help").style.opacity = 1;
+    document.getElementById("help").style["margin-left"] = "0px";
 })
 
 const showJoiner = () => {
