@@ -13,10 +13,9 @@ app.get('/', function(request, response) {
   response.sendFile(path.join(__dirname, 'index.html'));
 });
 // Starts the server.
-var server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080
-var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1'
-server.listen(server_port, server_ip_address, function () {
-  console.log( "Listening on " + server_ip_address + ", port " + server_port )
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, function() {
+  console.log('Starting server on port 5000');
 });
 
 let games = {};
