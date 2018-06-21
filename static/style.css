@@ -25,7 +25,6 @@ body{
     margin:16px;
     vertical-align: top;
     white-space: normal;
-    overflow:auto;
 }
 .panel::-webkit-scrollbar{
     display:none;
